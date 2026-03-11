@@ -1,0 +1,4 @@
+akshare
+flask
+flask-cors
+requests
