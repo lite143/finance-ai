@@ -4,7 +4,7 @@ import requests
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -49,12 +49,12 @@ tools_def = [
 ]
 
 def call_akshare_tool(name, args):
-    today = datetime.now().strftime("%Y%m%d")
+    today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y%m%d")
     try:
         if name == "get_stock_price":
             df = ak.stock_zh_a_spot_em()
             result = df[df['代码'] == args.get('symbol', '')].to_dict('records')
-            return {"data": result, "query_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            return {"data": result, "query_time": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")}
 
         elif name == "get_stock_history":
             end = args.get('end_date', today)
@@ -66,19 +66,19 @@ def call_akshare_tool(name, args):
                 end_date=end,
                 adjust="qfq"
             )
-            return {"data": df.tail(10).to_dict('records'), "query_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            return {"data": df.tail(10).to_dict('records'), "query_time": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")}
 
         elif name == "get_index_spot":
             # 使用实时行情接口
             df = ak.stock_zh_index_spot_em(symbol="沪深重要指数")
             result = df.to_dict('records')
-            return {"data": result, "query_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            return {"data": result, "query_time": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")}
 
     except Exception as e:
         return {"error": str(e)}
 
 def send_to_gemini(messages):
-    today_str = datetime.now().strftime("%Y年%m月%d日 %H:%M")
+    today_str = datetime.now(timezone(timedelta(hours=8))).strftime("%Y年%m月%d日 %H:%M")
     system_instruction = f"你是一个金融AI助手。当前真实时间是{today_str}。请使用工具获取实时数据，回答时注明数据获取时间，不要编造数据。"
     payload = {
         "system_instruction": {"parts": [{"text": system_instruction}]},
